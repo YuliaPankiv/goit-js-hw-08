@@ -1,36 +1,43 @@
 import throttle from 'lodash.throttle';
 
 const form = document.querySelector('.feedback-form');
-const emailInput = form.querySelector('input[type="email"]');
+const emailInput = form.querySelector('input[name="email"]');
 const messageInput = form.querySelector('textarea[name="message"]');
-const formState = { email: '', message: '' };
 const storageKey = 'feedback-form-state';
 
-const onFormInput = throttle(() => {
-  formState.email = emailInput.value;
-  formState.message = messageInput.value;
-  localStorage.setItem(storageKey, JSON.stringify(formState));
+// Функція для збереження стану форми в локальне сховище
+const saveFormState = throttle(() => {
+  const state = {
+    email: emailInput.value,
+    message: messageInput.value,
+  };
+  localStorage.setItem(storageKey, JSON.stringify(state));
 }, 500);
 
-emailInput.addEventListener('input', onFormInput);
-messageInput.addEventListener('input', onFormInput);
+// Функція для заповнення форми з локального сховища
+const loadFormState = () => {
+  const savedState = localStorage.getItem(storageKey);
+  if (savedState) {
+    const state = JSON.parse(savedState);
+    emailInput.value = state.email;
+    messageInput.value = state.message;
+  }
+};
 
-const savedState = localStorage.getItem(storageKey);
+// Заповнюємо форму при завантаженні сторінки
+loadFormState();
 
-if (savedState) {
-  const parsedState = JSON.parse(savedState);
-  formState.email = parsedState.email;
-  formState.message = parsedState.message;
-  emailInput.value = parsedState.email;
-  messageInput.value = parsedState.message;
-}
+// Відстежуємо зміни в полях форми і зберігаємо стан форми в локальне сховище
+form.addEventListener('input', saveFormState);
 
-form.addEventListener('submit', evt => {
-  evt.preventDefault();
+// Очищуємо локальне сховище та форму при сабміті форми
+form.addEventListener('submit', event => {
+  event.preventDefault();
   localStorage.removeItem(storageKey);
-  form.reset();
+  emailInput.value = '';
+  messageInput.value = '';
   console.log({
-    email: formState.email,
-    message: formState.message,
+    email: emailInput.value,
+    message: messageInput.value,
   });
 });
